@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YKS Ders Takip</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b6ef8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YKS Takip">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a23;
+    --surface2: #1e2332;
+    --border: #2a3045;
+    --accent: #5b6ef8;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e8eaf0;
+    --muted: #7b8299;
+    --card: #191d29;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #13172a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .stat-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .stat-chip span { color: var(--text); font-weight: 600; }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 24px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ─── CONTENT ─── */
+  .content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ─── OVERVIEW CARDS ─── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .ov-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ov-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .ov-card.mat::before { background: linear-gradient(90deg, #5b6ef8, #8b5cf6); }
+  .ov-card.geo::before { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+  .ov-card.tur::before { background: linear-gradient(90deg, #f59e0b, #f97316); }
+  .ov-card.fiz::before { background: linear-gradient(90deg, #10b981, #22c55e); }
+  .ov-card.kim::before { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+  .ov-card.bio::before { background: linear-gradient(90deg, #84cc16, #22c55e); }
+  .ov-card.sosyal::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .ov-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ov-icon { font-size: 28px; margin-bottom: 10px; }
+  .ov-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .ov-sub { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .progress-bar {
+    width: 100%;
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+  .mat .progress-fill { background: linear-gradient(90deg, #5b6ef8, #8b5cf6); }
+  .geo .progress-fill { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+  .tur .progress-fill { background: linear-gradient(90deg, #f59e0b, #f97316); }
+  .fiz .progress-fill { background: linear-gradient(90deg, #10b981, #22c55e); }
+  .kim .progress-fill { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+  .bio .progress-fill { background: linear-gradient(90deg, #84cc16, #22c55e); }
+  .sosyal .progress-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .ov-pct { font-size: 11px; color: var(--muted); text-align: right; }
+
+  /* ─── SCHEDULE ─── */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .week-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .week-btns { display: flex; gap: 8px; }
+  .week-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .week-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .day-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 800px) {
+    .day-grid { grid-template-columns: repeat(3, 1fr); }
+    .overview-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .day-grid { grid-template-columns: repeat(2, 1fr); }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .day-rest {
+    font-size: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .lesson-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lesson-item:hover { border-color: var(--border); }
+  .lesson-item.done {
+    opacity: 0.5;
+    background: var(--surface2);
+  }
+  .lesson-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .lesson-item.done .lesson-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .lesson-item.done .lesson-check::after {
+    content: '✓';
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .lesson-info { flex: 1; min-width: 0; }
+  .lesson-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lesson-duration {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ─── VIDEOS SECTION ─── */
+  .course-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .cf-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cf-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .cf-btn:hover:not(.active) { color: var(--text); border-color: var(--muted); }
+
+  .video-list { display: flex; flex-direction: column; gap: 6px; }
+  .video-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .video-row:hover { border-color: var(--accent); }
+  .video-row.v-done {
+    opacity: 0.45;
+    background: var(--surface);
+  }
+  .v-num {
+    font-size: 11px;
+    color: var(--muted);
+    width: 26px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .v-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .video-row.v-done .v-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .video-row.v-done .v-check::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .v-title { flex: 1; font-size: 13px; color: var(--text); }
+  .v-dur { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .v-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  /* course badge colors */
+  .badge-tyt-mat { background: rgba(91,110,248,0.15); color: #5b6ef8; }
+  .badge-geo { background: rgba(6,182,212,0.15); color: #06b6d4; }
+  .badge-tyt-tur { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .badge-tyt-fiz { background: rgba(16,185,129,0.15); color: #10b981; }
+  .badge-tyt-kim { background: rgba(236,72,153,0.15); color: #ec4899; }
+  .badge-tyt-bio { background: rgba(132,204,22,0.15); color: #84cc16; }
+  .badge-tar { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .badge-fel { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .badge-din { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .badge-cog { background: rgba(251,146,60,0.15); color: #fb923c; }
+  .badge-har { background: rgba(99,102,241,0.15); color: #6366f1; }
+  .badge-ayt-mat { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+  .badge-ayt-fiz { background: rgba(34,211,238,0.15); color: #22d3ee; }
+  .badge-ayt-kim { background: rgba(244,63,94,0.15); color: #f43f5e; }
+  .badge-ayt-bio { background: rgba(163,230,53,0.15); color: #a3e635; }
+  .badge-org-kim { background: rgba(251,113,133,0.15); color: #fb7185; }
+
+  /* ─── SAVE BTN ─── */
+  .save-bar {
+    position: fixed;
+    bottom: 20px;
+    right: 24px;
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+  }
+  .save-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 14px;
+    padding: 14px 24px;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(91,110,248,0.4);
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .save-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(91,110,248,0.5); }
+  .save-btn:active { transform: translateY(0); }
+  .save-toast {
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    background: var(--green);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .save-toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ─── SEARCH ─── */
+  .search-bar {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .search-bar input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px 10px 40px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* Phase badge */
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .section-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  /* streak */
+  .streak-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .streak-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+  .streak-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .streak-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .e-icon { font-size: 40px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">YKS Takip</div>
+  <div class="header-stats">
+    <div class="stat-chip" id="header-total">Toplam: <span id="h-total">0</span> video</div>
+    <div class="stat-chip" id="header-done">Bitti: <span id="h-done">0</span></div>
+    <div class="stat-chip">%<span id="h-pct">0</span></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('program')">📅 Program</div>
+  <div class="tab" onclick="showTab('genel')">📊 Genel Bakış</div>
+  <div class="tab" onclick="showTab('videolar')">🎬 Tüm Videolar</div>
+</div>
+
+<div class="content">
+
+  <!-- PROGRAM TAB -->
+  <div class="section active" id="tab-program">
+    <div class="phase-badge"><div class="phase-dot"></div> Faz 1: TYT + Geometri</div>
+    <div class="section-title">Haftalık Program</div>
+    <div class="section-sub">Pazar günü dinlenme günüdür • Her gün max ~3 saat video • Geometri her gün, Sosyal dersler rotasyonlu</div>
+
+    <div class="week-nav">
+      <div class="week-label" id="week-label">Hafta 1</div>
+      <div class="week-btns">
+        <button class="week-btn" onclick="changeWeek(-1)">← Önceki</button>
+        <button class="week-btn" onclick="changeWeek(1)">Sonraki →</button>
+      </div>
+    </div>
+
+    <div class="day-grid" id="day-grid"></div>
+  </div>
+
+  <!-- GENEL TAB -->
+  <div class="section" id="tab-genel">
+    <div class="section-title">Genel Bakış</div>
+    <div class="section-sub">Dersler ve tamamlanma durumu</div>
+
+    <div class="streak-row">
+      <div class="streak-card">
+        <div class="streak-num" id="s-done">0</div>
+        <div class="streak-lbl">Tamamlanan Video</div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-num" id="s-left">0</div>
+        <div class="streak-lbl">Kalan Video</div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-num" id="s-pct">%0</div>
+        <div class="streak-lbl">Toplam İlerleme</div>
+      </div>
+    </div>
+
+    <div class="overview-grid" id="overview-grid"></div>
+  </div>
+
+  <!-- VIDEOLAR TAB -->
+  <div class="section" id="tab-videolar">
+    <div class="section-title">Tüm Videolar</div>
+    <div class="section-sub">Videolara tıklayarak tamamlandı işaretle</div>
+
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Video ara..." id="v-search" oninput="filterVideos()">
+    </div>
+
+    <div class="course-filter" id="course-filter"></div>
+    <div class="video-list" id="video-list"></div>
+  </div>
+
+</div>
+
+<div class="save-bar">
+  <button class="save-btn" onclick="saveProgress()">💾 Kaydet</button>
+</div>
+<div class="save-toast" id="toast">✓ Kaydedildi!</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════
+
+const COURSES = {
+  'tyt-mat': { name: 'TYT Matematik', icon: '📐', cls: 'mat', badgeCls: 'badge-tyt-mat', phase: 1 },
+  'geo':     { name: 'Geometri',      icon: '📏', cls: 'geo', badgeCls: 'badge-geo',     phase: 1 },
+  'tyt-tur': { name: 'TYT Türkçe',   icon: '📖', cls: 'tur', badgeCls: 'badge-tyt-tur', phase: 1 },
+  'tyt-fiz': { name: 'TYT Fizik',    icon: '⚡', cls: 'fiz', badgeCls: 'badge-tyt-fiz', phase: 1 },
+  'tyt-kim': { name: 'TYT Kimya',    icon: '🧪', cls: 'kim', badgeCls: 'badge-tyt-kim', phase: 1 },
+  'tyt-bio': { name: 'TYT Biyoloji', icon: '🧬', cls: 'bio', badgeCls: 'badge-tyt-bio', phase: 1 },
+  'tar':     { name: 'TYT Tarih',    icon: '🏛', cls: 'sosyal', badgeCls: 'badge-tar',  phase: 1 },
+  'fel':     { name: 'TYT Felsefe',  icon: '💭', cls: 'sosyal', badgeCls: 'badge-fel',  phase: 1 },
+  'din':     { name: 'Din Kültürü',  icon: '☪️', cls: 'sosyal', badgeCls: 'badge-din',  phase: 1 },
+  'cog':     { name: 'TYT Coğrafya', icon: '🗺', cls: 'sosyal', badgeCls: 'badge-cog',  phase: 1 },
+  'har':     { name: 'Harita Bilgisi',icon:'🧭', cls: 'sosyal', badgeCls: 'badge-har',  phase: 1 },
+  'ayt-mat': { name: 'AYT Matematik',icon: '∞', cls: 'mat', badgeCls: 'badge-ayt-mat',  phase: 2 },
+  'ayt-fiz': { name: 'AYT Fizik',    icon: '🌌', cls: 'fiz', badgeCls: 'badge-ayt-fiz', phase: 2 },
+  'ayt-kim': { name: 'AYT Kimya',    icon: '⚗️', cls: 'kim', badgeCls: 'badge-ayt-kim', phase: 2 },
+  'ayt-bio': { name: 'AYT Biyoloji', icon: '🔬', cls: 'bio', badgeCls: 'badge-ayt-bio', phase: 2 },
+  'org-kim': { name: 'Organik Kimya',icon: '🧫', cls: 'kim', badgeCls: 'badge-org-kim', phase: 2 },
+};
+
+// All videos per course (abbreviated for compactness, full data)
+const VIDEOS = {};
+
+// TYT Matematik – 259 videos (sample structure, full list)
+VIDEOS['tyt-mat'] = generateVideos('tyt-mat', [
+  'Temel Kavramlar Sayı Kümeleri','Temel Kavramlar Özdeşlikler','Temel Kavramlar Özdeşlikler 2','Temel Kavramlar Bire Bir ÖSYM','Temel Kavramlar Beceri Temelli',
+  'Tek Çift Sayılar','Pozitif Negatif Sayılar','Tek Çift Pozitif Negatif Beceri','Ardışık Sayılar','Ardışık Sayılar Bire Bir ÖSYM',
+  'Ardışık Sayılar Beceri','Faktöriyel','Faktöriyel Beceri','Asal Sayılar','Asal Sayılar Beceri',
+  'Sayı Basamakları','Sayı Basamakları Bire Bir ÖSYM','Sayı Basamakları Beceri','Bölme','Bölme Bölünebilme',
+  'Bölünebilme Kuralları','Bölme Bölünebilme Bire Bir ÖSYM','Bölme Bölünebilme Beceri','Asal Çarpanlara Ayırma','Asal Çarpanlara Ayırma Bire Bir ÖSYM',
+  'Asal Çarpanlara Ayırma Beceri','EBOB EKOK','EBOB EKOK Problemleri','EBOB EKOK Bire Bir ÖSYM','EBOB EKOK Beceri',
+  'Periyodik Problemler','Periyodik Bire Bir ÖSYM','Periyodik Beceri','Rasyonel Sayılar','Ondalıklı Sayılar',
+  'Rasyonel Sayılar Bire Bir ÖSYM','Rasyonel Sayılar Beceri','Birinci Dereceden Denklemler','Birinci Dereceden Bire Bir ÖSYM','Birinci Dereceden Beceri',
+  'Basit Eşitsizlikler 1','Basit Eşitsizlikler 2','Basit Eşitsizlikler Bire Bir ÖSYM','Basit Eşitsizlikler Beceri','Mutlak Değer',
+  'Mutlak Değer Denklemler','Mutlak Değer Eşitsizlikler','Mutlak Değer Bire Bir ÖSYM','Mutlak Değer Beceri','Üslü Sayılar 1',
+  'Üslü Sayılar 2','Üslü Denklemler','Üslü Eşitsizlikler','Üslü Sayılar Bire Bir ÖSYM','Üslü Sayılar Beceri',
+  'Köklü Sayılar 1','Köklü Sayılar 2','Köklü Sayılar Bire Bir ÖSYM','Köklü Sayılar Beceri','Çarpanlara Ayırma 1',
+  'Çarpanlara Ayırma 2','Çarpanlara Ayırma 3','Çarpanlara Ayırma Bire Bir ÖSYM','Çarpanlara Ayırma Beceri','Oran Orantı',
+  'Doğru Orantı','Ters Orantı','Ortalamalar','Oran Orantı Bire Bir ÖSYM','Oran Orantı Beceri',
+  'Sayı Problemleri 1','Sayı Problemleri Bire Bir ÖSYM 1','Sayı Problemleri Bire Bir ÖSYM 2','Sayı Problemleri Beceri 1','Sayı Problemleri Beceri 2',
+  'Kesir Problemleri','Kesir Problemleri Bire Bir ÖSYM','Kesir Problemleri Beceri','Yaş Problemleri','Yaş Problemleri Bire Bir ÖSYM',
+  'Yaş Problemleri Beceri','İşçi Problemleri','İşçi Problemleri Bire Bir ÖSYM','İşçi Problemleri Beceri','Hız Problemleri 1',
+  'Hız Problemleri 2','Hız Problemleri 3','Hız Problemleri Bire Bir ÖSYM 1','Hız Problemleri Bire Bir ÖSYM 2','Hız Problemleri Beceri 1',
+  'Hız Problemleri Beceri 2','Yüzde Problemleri 1','Yüzde Problemleri 2','Yüzde Problemleri Bire Bir ÖSYM','Yüzde Problemleri Beceri 1',
+  'Yüzde Problemleri Beceri 2','Karışım Problemleri','Karışım Bire Bir ÖSYM','Karışım Beceri','Grafik Problemleri',
+  'Grafik Bire Bir ÖSYM','Grafik Beceri','Veri','Veri Bire Bir ÖSYM','Veri Beceri',
+  'Kümeler','Alt Kümeler','Kümelerde İşlemler','Kümelerde İşlem Öncelikleri','Kümeler Bire Bir ÖSYM',
+  'Kümeler Beceri','Küme Problemleri','Kartezyen Çarpım','Kümeler Kartezyen Beceri','Fonksiyon Tanımı',
+  'Fonksiyon Tanım Görüntü Kümesi','Fonksiyonda Değer Bulma 1','Fonksiyonda Değer Bulma 2','Fonksiyonda Dört İşlem','Fonksiyon Çeşitleri 1',
+  'Fonksiyon Çeşitleri 2','Fonksiyon 1 Bire Bir ÖSYM 1','Fonksiyon 1 Bire Bir ÖSYM 2','Fonksiyon 1 Beceri 1','Fonksiyon 1 Beceri 2',
+  'Fonksiyonun Tersi 1','Fonksiyonun Tersi 2','Bileşke Fonksiyon','Fonksiyon Grafikleri','Parçalı ve Mutlak Değer Fonksiyon',
+  'Fonksiyon 2 Bire Bir ÖSYM 1','Fonksiyon 2 Bire Bir ÖSYM 2','Fonksiyon 2 Beceri 1','Fonksiyon 2 Beceri 2','Sayma Küme Fonksiyon',
+  'Sayma Küme Fonksiyon Bire Bir ÖSYM','Sayma Fonksiyon Küme Becerileri','Sayma 1','Sayma 2','Permütasyon 1',
+  'Permütasyon 2','Tekrarlı Permütasyon','Sayma Permütasyon Bire Bir ÖSYM','Sayma Permütasyon Beceri','Kombinasyon 1',
+  'Kombinasyon 2','Kombinasyon 3','Geometri Şekillerde Kombinasyon','Kombinasyon Bire Bir ÖSYM','Kombinasyon Beceri',
+  'Binom','Binom Bire Bir ÖSYM','Binom Beceri','Olasılık 1','Olasılık 2',
+  'Olasılık 3','Olasılık Bire Bir ÖSYM 1','Olasılık Bire Bir ÖSYM 2','Olasılık Beceri','Mantık',
+  'Mantık ve veya Bağlaçları','Mantık İse Ancak ve Ancak','Mantık Sembolleştirme','Mantık Bire Bir ÖSYM','Mantık Beceri',
+  'Polinom','Polinom Çeşitleri','Polinomda İşlemler','Polinom Sabit Terim Katsayılar','Polinomda Bölme ve Kalan',
+  'Polinomda Kalan Bulma','Polinom Bire Bir ÖSYM','Polinom Beceri 1','Polinom Beceri 2','2. Dereceden Denklemler 1',
+  'Polinom Beceri 3','2. Dereceden Denklemler 2','2. Dereceden Denklemler Kökler Katsayılar','Kökleri Verilen Denklem','2. Dereceye Dönüştürülen Denklemler',
+  '2. Dereceden Bire Bir ÖSYM 1','2. Dereceden Bire Bir ÖSYM 2','2. Dereceden Beceri 1','2. Dereceden Beceri 2','Karmaşık Sayılar 1',
+  'Karmaşık Sayılar 2','Karmaşık Sayılar Bire Bir ÖSYM'
+], [25,27,18,11,30, 25,22,25,35,12, 27,39,19,28,17, 27,18,24,16,25, 40,18,28,38,17, 28,36,23,22,30, 20,12,9,29,18, 10,17,38,23,17, 27,33,18,23,48, 28,27,15,27,29, 24,29,8,15,27, 40,34,12,21,32, 25,25,7,26,23, 24,26,39,18,28, 36,27,25,30,18, 12,9,16,19,16, 28,25,25,28,37, 20,12,9,20,27, 17,24,26,30,29, 21,22,25,22,31, 38,19,31,43,64, 45,19,31,33,43, 29,17,12,39,49, 35,30,29,16,44, 21,18,23,12,26, 49,27,38,39,25, 30,21,25,25,16, 22,34,26,40,31, 18,11,19,19,28, 30,16,13,21,17, 7,17,14,28,27, 29,10,17,13,23, 21,14,27,11,12, 8,17]);
+
+// Geometri – 112 videos
+VIDEOS['geo'] = generateVideos('geo', [
+  'Doğruda Açı 1 Giriş','Doğruda Açı 2 Özellikler','Doğruda Açı 3 Karma',
+  'Üçgende Açı 1 Temel','Üçgende Açı 2 İkizkenar','Üçgende Açı 3 Eşkenar','Üçgende Açı 4 Dik','Üçgende Açı 5 Açıortay','Üçgende Açı 6 Kesme',
+  'Dik Üçgen 1 Pisagor','Dik Üçgen 2 Öklit','Dik Üçgen 3 Özel','Dik Üçgen 4 Karma',
+  'İkizkenar Üçgen 1','İkizkenar Üçgen 2','İkizkenar Üçgen 3','İkizkenar Üçgen 4',
+  'Eşkenar Üçgen 1','Eşkenar Üçgen 2',
+  'Açıortay 1','Açıortay 2 İç','Açıortay 3 Dış','Açıortay 4 Karma',
+  'Kenarortay 1','Kenarortay 2','Kenarortay 3 Karma',
+  'Benzerlik 1 Eşlik','Benzerlik 2 Çeşitler','Benzerlik 3 AçıAçıAçı 1','Benzerlik 4 AçıAçıAçı 2','Benzerlik 5 KAK KKK','Benzerlik 6 Temel Teori','Benzerlik 7 Orta Taban','Benzerlik 8 Açıortay Kenarortay','Benzerlik 9 Thales','Benzerlik 10 Yardımcı','Benzerlik 11 Karma',
+  'Üçgende Alan 1','Üçgende Alan 2','Üçgende Alan 3','Üçgende Alan 4','Üçgende Alan 5','Üçgende Alan 6','Üçgende Alan 7',
+  'Açı Kenar Bağıntıları 1','Açı Kenar Bağıntıları 2','Açı Kenar Bağıntıları 3',
+  'Çokgenler 1','Çokgenler 2 Beşgen','Çokgenler 3 Altıgen','Çokgenler 4','Çokgenler 5 Karma',
+  'Dörtgenler 1','Dörtgenler 2','Deltoid 1','Deltoid 2',
+  'Yamuk 1','Yamuk 2 Benzerlik','Yamuk 3 Orta Taban','Yamuk 4 Alan','Yamuk 5 Alan 2','Yamuk 6 İkizkenar','Yamuk 7 Dik','Yamuk 8 Karma 1','Yamuk 9 Karma 2','Yamuk 10 Karma 3',
+  'Paralelkenar 1','Paralelkenar 2 Köşegen','Paralelkenar 3 Benzerlik','Paralelkenar 4 Alan 1','Paralelkenar 5 Alan 2','Paralelkenar 6 Karma',
+  'Eşkenar Dörtgen 1','Eşkenar Dörtgen 2','Eşkenar Dörtgen 3 Alan',
+  'Dikdörtgen 1','Dikdörtgen 2 Köşegen','Dikdörtgen 3 Benzerlik','Dikdörtgen 4 Alan','Dikdörtgen 5 Karma',
+  'Kare 1','Kare 2 Köşegen','Kare 3 Benzerlik','Kare 4 Alan','Kare 5 Karma',
+  'Çemberde Açı 1','Çemberde Açı 2','Çemberde Açı 3','Çemberde Açı 4','Çemberde Açı 5','Çemberde Açı 6 Karma 1','Çemberde Açı 7 Karma 2',
+  'Çemberde Uzunluk 1','Çemberde Uzunluk 2','Çemberde Uzunluk 3','Çemberde Uzunluk 4','Çemberde Uzunluk 5','Çemberde Uzunluk 6','Çemberde Uzunluk 7 Karma 1','Çemberde Uzunluk 8 Karma 2','Çemberde Uzunluk 9 Karma 3',
+  'Dairenin Çevresi ve Alanı 1','Dairenin Çevresi ve Alanı 2','Dairenin Çevresi ve Alanı 3','Dairenin Çevresi ve Alanı 4',
+  'Nokta Analitiği','Doğru Analitiği','Dönüşümler','Çember Analitiği','Katı Cisimler'
+], [21,72,41, 43,49,25,23,19,48, 29,22,32,33, 22,14,14,30, 17,27, 28,20,13,35, 24,19,33, 24,23,25,30,11,23,22,20,22,13,39, 29,31,45,19,35,27,26, 14,12,31, 20,25,25,22,33, 18,16,23,27, 21,14,12,23,22,20,11,20,20,34, 18,11,16,35,23,26, 12,15,32, 8,18,24,11,34, 18,12,28,17,27, 19,20,12,21,9,16,19, 8,19,19,11,15,12,17,24,22, 16,15,19,29, 119,256,156,107,304]);
+
+// TYT Türkçe – 46 videos
+VIDEOS['tyt-tur'] = generateVideos('tyt-tur', [
+  'Giriş: 40ta 40 Nasıl?','Ses Bilgisi 1','Ses Bilgisi 2','Ses Bilgisi 3',
+  'Yazım Kuralları 1','Yazım Kuralları 2','Yazım Kuralları 3','Yazım Kuralları 4','Yazım Kuralları 5','Yazım Kuralları 6',
+  'Noktalama İşaretleri 1','Noktalama İşaretleri 2','Noktalama İşaretleri 3','Noktalama İşaretleri 4',
+  'Sözcükte Yapı 1 Kök','Sözcükte Yapı 2 İsim Çekim','Sözcükte Yapı 3 Fiil Çekim','Sözcükte Yapı 4 Yapım','Sözcükte Yapı 5',
+  'İsim (Ad)','Sıfat 1','Sıfat 2','Zamir 1','Zamir 2','Tamlamalar','Zarf','Edat','Bağlaç - Ünlem',
+  'Kip ve Çekim','Fiilde Yapı (Ek Fiil)','Fiilimsiler','Fiilde Çatı','Söz Grupları',
+  'Cümlenin Ögeleri 1','Cümlenin Ögeleri 2','Cümlenin Ögeleri 3',
+  'Cümle Türleri 1','Cümle Türleri 2','Anlatım Bozuklukları',
+  'Sözcükte Anlam','Cümlede Anlam','Paragrafta Anlatım Biçimleri','Paragrafta Anlam','Paragrafta Yapı',
+  'Çoklu - Aşamalı Paragraf','Yeni Nesil Yorumlama'
+], [23,59,68,45, 47,49,39,55,35,47, 38,42,20,43, 41,57,21,38,39, 49,47,43,31,33,74,60,42,32, 57,50,39,51,44, 28,32,30, 23,37,58, 74,64,32,23,56, 32,31]);
+
+// TYT Fizik – 119 videos
+VIDEOS['tyt-fiz'] = generateVideos('tyt-fiz', [
+  'Başlangıç','Fiziğe Giriş 1','Fiziğe Giriş 2','Fiziğe Giriş Soru',
+  'Madde ve Özellikleri 1','Madde ve Özellikleri 2','Madde ve Özellikleri 3','Madde ve Özellikleri Soru 1','Madde ve Özellikleri 4','Madde ve Özellikleri 5','Madde ve Özellikleri Soru 2',
+  'Hareket 1','Hareket 2','Hareket 3','Hareket Soru 1','Hareket Soru 2',
+  'Kuvvet 1','Kuvvet 2','Kuvvet 3','Kuvvet 4','Kuvvet Soru 1','Kuvvet Soru 2',
+  'İş Güç Enerji 1','İş Güç Enerji 2','İş Güç Enerji 3','İş Güç Enerji 4','İş Güç Enerji Soru 1','İş Güç Enerji Soru 2',
+  'Isı ve Sıcaklık 1','Isı ve Sıcaklık 2','Isı ve Sıcaklık 3','Isı ve Sıcaklık 4','Isı ve Sıcaklık 5','Isı ve Sıcaklık 6','Isı ve Sıcaklık Soru 1','Isı ve Sıcaklık Soru 2',
+  'Genleşme 1','Genleşme 2','Genleşme Soru',
+  'Elektrostatik 1','Elektrostatik 2','Elektrostatik 3','Elektrostatik 4','Elektrostatik 5','Elektrostatik 6','Elektrostatik Soru 1','Elektrostatik Soru 2',
+  'Elektrik Akımı 1','Elektrik Akımı 2','Elektrik Devreleri 1','Elektrik Devreleri 2','Elektrik Devreleri 3','Elektrik Devreleri Soru 1','Elektrik Devreleri Soru 2','Elektriksel Güç','Güç Lambalar Soru 1','Güç Lambalar Soru 2',
+  'Manyetizma 1','Manyetizma 2','Manyetizma 3','Manyetizma 4','Manyetizma Soru 1','Manyetizma Soru 2',
+  'Basınç 1 Katı','Basınç Soru 1','Basınç 2 Sıvı 1','Basınç 3 Sıvı 2','Basınç 4 Sıvı 3','Basınç 5 Açık Hava','Basınç 6 Kapalı Kap','Basınç 7','Basınç 8',
+  'Sıvı Basıncı Soru 1','Sıvı Basıncı Soru 2','Gaz Basıncı Soru 1','Gaz Basıncı Soru 2',
+  'Kaldırma Kuvveti 1','Kaldırma Kuvveti 2','Kaldırma Kuvveti Soru 1','Kaldırma Kuvveti Soru 2',
+  'Aydınlanma 1','Aydınlanma 2','Aydınlanma Soru','Gölge 1','Gölge 2','Gölge Soru',
+  'Yansıma ve Kanunlar','Düzlem Ayna 1','Görüş Alanı','Düzlem Ayna Soru',
+  'Çukur Ayna Işınlar','Tümsek Ayna Işınlar','Çukur Ayna Görüntü','Tümsek Ayna Görüntü','Küresel Aynalar Soru',
+  'Kırılma Snell','Tam Yansıma','Küresel Yüzey Görünür','Işığın Kırılması Soru',
+  'Mercekler','İnce Kalın Kenarlı Işınlar','Merceklerde Görüntü','Mercekler Soru',
+  'Prizmalar','Renkler','Prizma Renkler Soru',
+  'Dalgalar Temel','Dalgaların Sınıflandırılması','Atmaların İlerlemesi','Atmaların Yansıması','Farklı Ortama Geçiş','Yay Dalgaları Soru',
+  'Doğrusal Su Dalgaları','Doğrusal Yansıma','Dairesel Yansıma','Su Dalgalarının Hızı','Su Dalgaları Soru',
+  'Ses ve Deprem','Ses ve Deprem Soru'
+], [4,27,27,27, 30,24,22,26,23,33,32, 36,32,30,27,19, 24,36,26,30,21,26, 28,31,32,22,24,20, 30,15,28,40,31,31,25,22, 22,22,30, 19,37,28,29,18,23,26,23, 38,24,41,38,29,18,17,37,23,18, 34,34,22,13,30,21, 29,19,26,23,29,31,29,27,25, 25,16,22,22, 34,34,30,27, 24,23,24,25,30,20, 33,36,21,26, 31,14,39,19,25, 32,39,25,32,19, 32,58, 34,28,38,38,31,26, 20,31,15,39,36, 43,22]);
+
+// TYT Kimya – 49 videos
+VIDEOS['tyt-kim'] = generateVideos('tyt-kim', [
+  'Tanıtım','Kitap Tanıtımı','Simyadan Kimyaya','Kimyanın Çalışma Alanları','Kimyanın Sembolik Dili','İş Sağlığı 1','İş Sağlığı 2',
+  'Atom Modelleri','Atomun Yapısı','Periyodik Sistem','Elementlerin Sınıflandırılması','Periyodik Özellikler 1','Periyodik Özellikler 2',
+  'Kimyasal Türler Etkileşimler','İyonik Bağ','İyonik Bileşik Adlandırma','Kovalent Bağ','Kovalent Adlandırma Metalik','Zayıf Etkileşimler',
+  'Fiziksel Kimyasal Değişimler','Maddenin Halleri','Katılar','Sıvılar','Gazlar','Doğa ve Kimya',
+  'Kimyanın Temel Kanunları','Sabit Oranlar','Katlı Oranlar','Mol Kavramı 1','Mol Kavramı 2','Mol Soru',
+  'Kimyasal Tepkime Türleri','Tepkimelerde Hesaplamalar 1','Tepkimelerde Hesaplamalar 2','Tepkimelerde Hesaplamalar 3','Hesaplamalar Soru',
+  'Karışımların Sınıflandırılması 1','Karışımların Sınıflandırılması 2','Çözünme Süreci','Çözeltilerde Derişim','Karışımlar ÖSYM Soruları',
+  'Koligatif Özellikler','Ayırma Saflaştırma','Asitler ve Bazlar','Asit Baz Tepkimeleri 1','Asit Baz Tepkimeleri 2',
+  'Hayatımızdaki Asit Baz Tuzlar','Asit Baz Tuzlar Değerlendirme','Kimya Her Yerde'
+], [9,9,51,39,40,29,38, 39,37,45,34,40,47, 26,50,54,32,29,61, 41,33,35,65,44,30, 26,49,16,47,70,47, 51,56,47,38,61, 51,38,29,51,20, 39,61,55,50,44, 42,23,64]);
+
+// TYT Biyoloji – 80 videos
+VIDEOS['tyt-bio'] = generateVideos('tyt-bio', [
+  'Kamp Tanıtımı','Kitap İncelemesi','Zemin Hazırla',
+  'Canlıların Genel Özellikleri KA','Canlıların Genel Özellikleri SÇ',
+  'İnorganik Bileşikler KA','İnorganik Bileşikler SÇ','Karbohidratlar KA','Karbohidratlar SÇ',
+  'Lipitler KA','Lipitler SÇ','Proteinler KA','Proteinler SÇ',
+  'Hormonlar KA','Vitaminler KA','Enzimler KA','Enzimleri Etkileyen Faktörler','Enzimler Soru',
+  'Nükleik Asitler KA','DNA KA','DNA SÇ','RNA','ATP Metabolizma','RNA ATP Soru','Full Tekrar',
+  'Hücre - Hücre Zarı KA','Hücre - Hücre Zarı SÇ',
+  'Pasif Taşıma KA','Aktif Taşıma Endositoz KA','Madde Geçişleri SÇ',
+  'Ribozom Sentrozom KA','Tek Zarlı Organeller KA','Tek Zarlı Organeller SÇ',
+  'Çift Zarlı Organeller KA','Çekirdek Hücre İskeleti KA','Çekirdek İskelet SÇ',
+  'Bilimsel Yöntem KA','Bilimsel Yöntem Organeller SÇ','Hücre Genel Tekrar',
+  'Ekoloji Kavramlar','Ekosistemi Oluşturan Bileşenler','Besin Zinciri KA','Besin Zinciri SÇ',
+  'Madde Döngüleri KA','Güncel Çevre Sorunları','Madde Döngüleri Çevre SÇ','Ekosistem Full Tekrar',
+  'İkili Adlandırma KA','İkili Adlandırma SÇ','Bakteriler Alemi','Arkeler Alemi',
+  'Protista Bitki Mantar KA','Protista Bitki Mantar SÇ','Omurgasız Hayvanlar','Omurgalı Hayvanlar Virüsler KA','Omurgalı Virüsler SÇ','Sınıflandırma Full Tekrar',
+  'Bölünme Kavramlar','Mitoz KA','Mitoz SÇ','Mayoz KA','Eşeysiz Üreme KA','Mayoz SÇ',
+  'Eşeyli Üreme KA','Eşeyli Üreme SÇ','Hücre Bölünmeleri Full Tekrar',
+  'Kalıtım Kavramlar Gamet','Çaprazlamalar','Çaprazlamalar SÇ',
+  'Eş Baskınlık Çok Alellik','Kan Grupları KA','Kan Grupları SÇ',
+  'Eşeye Bağlı Kalıtım','Otozomal Çekinik Baskın','X ve Y\'ye Bağlı Kalıtım','Soy Ağaçları SÇ','Kalıtım Full Tekrar',
+  'MSÜ Analizi','MSÜ-TYT Full Tekrar','Deneme Çözümü'
+], [13,17,44, 34,14, 31,10,53,16, 27,10,44,30, 7,16,36,25,28, 19,30,18,19,44,16,30, 39,23, 63,25,45, 20,32,18, 29,22,21, 15,30,21, 27,37,22,33, 13,25,29,14, 26,17,36,17, 21,17,34,42,22,17, 45,45,27,46,37,66, 12,21,22, 50,26,31, 28,33,27, 15,16,28,86,29, 14,153,134]);
+
+// TYT Tarih – 76 videos
+VIDEOS['tar'] = generateVideos('tar', [
+  'Kamp Tanıtımı','Tarih ve Zaman KA','Tarih ve Zaman SÇ','İnsanlığın İlk Dönemleri KA','Orta Çağda Dünya KA','İlk Dönem Orta Çağ SÇ',
+  'İlk ve Orta Çağlar Türk Dünyası KA 1','İlk ve Orta Çağlar Türk SÇ 1','İlk ve Orta Çağlar Türk KA 2','İlk ve Orta Çağlar Türk SÇ 2',
+  'İslam Medeniyeti KA 1','İslam Medeniyeti KA 2','İslam Medeniyeti SÇ',
+  'Türklerin İslamiyeti Kabulü KA 1','Türklerin İslamiyeti SÇ 1','Türklerin İslamiyeti KA 2','Türklerin İslamiyeti SÇ 2',
+  'Selçuklu KA','Selçuklu SÇ','Beylikten Devlete Osmanlı KA','Beylikten Devlete SÇ','Savaşçılar KA','Savaşçılar SÇ',
+  'Osmanlı Medeniyeti KA','Osmanlı Medeniyeti SÇ','Dünya Gücü Osmanlı KA 1','Dünya Gücü Osmanlı SÇ 1','Dünya Gücü Osmanlı KA 2','Dünya Gücü Osmanlı SÇ 2',
+  'Sultan ve Merkez Teşkilatı KA','Sultan ve Merkez SÇ','Osmanlı Toplum Düzeni KA','Osmanlı Toplum Düzeni SÇ',
+  'Değişen Dengeler Osmanlı KA','Değişen Dengeler SÇ','Değişim Çağında Avrupa Osmanlı KA 1','Değişim Çağı KA 2','Değişim Çağı SÇ',
+  'Devrimler Çağı KA','Devrimler Çağı SÇ','Uluslararası Denge KA 1','Denge SÇ 1','Uluslararası Denge KA 2','Denge SÇ 2',
+  'Sosyoekonomik Hayat KA','Sosyoekonomik SÇ','20. Yüzyıl Osmanlı Dünya KA 1','20. Yüzyıl SÇ 1','20. Yüzyıl KA 2','20. Yüzyıl SÇ 2',
+  'Milli Mücadele 1 KA','Milli Mücadele 1 SÇ','Milli Mücadele 2 KA','Milli Mücadele 2 SÇ','Milli Mücadele 3 KA','Milli Mücadele 3 SÇ','Milli Mücadele 4 KA','Milli Mücadele 4 SÇ','Milli Mücadele 5 KA','Milli Mücadele 5 SÇ','Milli Mücadele 6 KA','Milli Mücadele 6 SÇ',
+  'Atatürkçülük 1 KA','Atatürkçülük 1 SÇ','Atatürkçülük KA 2','Atatürkçülük SÇ 2','Atatürkçülük 3 KA','Atatürkçülük 3 SÇ',
+  'İki Savaş Arası Türkiye KA 1','İki Savaş Arası SÇ 1','İki Savaş Arası KA 2','İki Savaş Arası SÇ 2',
+  'Küresel Savaşlar Arası KA','II. Dünya Savaşı KA','II. Dünya Savaşı SÇ','Full Tekrar'
+], [8,49,23,56,21,16, 53,75,15,29, 26,22,11, 25,33,30,55, 51,49,29,23,19,14, 20,13,30,13,28,25, 20,12,19,11, 30,24,17,30,28, 23,22,30,26,27,26, 17,14,25,23,50,45, 24,13,37,33,30,12,10,8,43,28,21,51, 24,27,19,19,32,60, 15,10,21,47, 23,18,28,86]);
+
+// TYT Felsefe – 112 videos (konu + testler)
+VIDEOS['fel'] = generateVideos('fel', [
+  'Kamp Başlıyor','Felsefeyle Tanışma 1','Felsefeyle Tanışma 2','Felsefeyle Tanışma 3',
+  'Test 1 Felsefe','Test 2 Felsefe','Test 3 Felsefe','Test 4 Felsefe','Test 5 Felsefe','Test 6 Felsefe','Test 7 Felfefe','Test 8 Felsefe',
+  'Bilgi Felsefesi 1','Bilgi Felsefesi 2','Bilgi Felsefesi 3','Bilgi Felsefesi 4',
+  'Test 9 Bilgi','Test 10 Bilgi','Test 11 Bilgi','Test 12 Bilgi','Test 13 Bilgi','Test 14 Bilgi','Test 15 Bilgi','Test 16 Bilgi','Test 17 Bilgi','Test 18 Bilgi','Test 19 Bilgi','Test 20 Bilgi',
+  'Varlık Felsefesi 1','Varlık Felsefesi 2','Varlık Felsefesi 3','Varlık Felsefesi 4',
+  'Test 21 Varlık','Test 22 Varlık','Test 23 Varlık','Test 24 Varlık','Test 25 Varlık','Test 26 Varlık','Test 27 Varlık','Test 28 Varlık','Test 29 Varlık',
+  'Ahlak Felsefesi 1','Ahlak Felsefesi 2','Ahlak Felsefesi 3',
+  'Test 30 Ahlak','Test 31 Ahlak','Test 32 Ahlak','Test 33 Ahlak','Test 34 Ahlak','Test 35 Ahlak','Test 36 Ahlak','Test 37 Ahlak','Test 38 Ahlak',
+  'Sanat Felsefesi 1','Sanat Felsefesi 2',
+  'Test 39 Sanat','Test 40 Sanat','Test 41 Sanat','Test 42 Sanat','Test 43 Sanat','Test 44 Sanat','Test 45 Sanat','Test 46 Sanat','Test 47 Sanat','Test 48 Sanat',
+  'Din Felsefesi 1','Din Felsefesi 2',
+  'Test 49 Din','Test 50 Din','Test 51 Din','Test 52 Din','Test 53 Din','Test 54 Din','Test 55 Din','Test 56 Din','Test 57 Din','Test 58 Din',
+  'Siyaset Felsefesi 1','Siyaset Felsefesi 2',
+  'Test 59 Siyaset','Test 60 Siyaset','Test 61 Siyaset','Test 62 Siyaset','Test 63 Siyaset','Test 64 Siyaset','Test 65 Siyaset','Test 66 Siyaset','Test 67 Siyaset','Test 68 Siyaset',
+  'Bilim Felsefesi 1','Bilim Felsefesi 2',
+  'Test 69 Bilim','Test 70 Bilim','Test 71 Bilim','Test 72 Bilim','Test 73 Bilim','Test 74 Bilim','Test 76 Bilim','Test 77 Konu','Test 78 Bilim',
+  'Felsefe Tarihi 1','Felsefe Tarihi 2',
+  'Test 79 Tarih','Test 80 Tarih','Test 81 Tarih','Test 82 Tarih','Test 83 Tarih','Test 84 Tarih','Test 85 Tarih','Test 86 Tarih','Test 87 Tarih','Test 88 Tarih'
+], [4,21,47,12, 18,15,17,16,16,17,15,15, 37,24,37,25, 14,13,12,12,11,12,10,11,11,10,10,10, 18,14,20,17, 14,14,19,16,18,16,15,15,18, 26,17,19, 15,12,15,15,18,13,16,12,12, 26,27, 13,13,13,12,12,13,13,11,10,11, 21,14, 14,10,11,10,11,10,10,10,9,10, 30,20, 15,12,12,13,11,13,12,11,18, 16,17, 14,14,15,15,14,13,16,14,15,10, 39,30, 11,12,11,10,11,11,10,11,10]);
+
+// Din Kültürü – 15 videos
+VIDEOS['din'] = generateVideos('din', [
+  'İnanç 1','İnanç 2','İnanç 3',
+  'Temizlik ve İbadet 1','Temizlik ve İbadet 2',
+  'Yaşayan Dinler Hristiyanlık','Yaşayan Dinler Yahudilik','Hint Dinleri',
+  "Kur'an Tarihi 1","Kur'an Tarihi 2",
+  "Kur'an'a Göre Hz. Muhammed 1","Kur'an'a Göre Hz. Muhammed 2",
+  'İslam Düşüncesi 1','İslam Düşüncesi 2','İslam Düşüncesi 3'
+], [41,31,22, 33,16, 19,21,31, 37,20, 35,27, 33,27,11]);
+
+// Coğrafya – 59 videos
+VIDEOS['cog'] = generateVideos('cog', [
+  'Zeduva 1 Kitap','Doğa ve İnsan KA','Doğa ve İnsan SÇ','Coğrafya Tarihi KA','Coğrafya Tarihi SÇ',
+  'Atmosfer Katmanları KA','Atmosfer Katmanları SÇ','Sıcaklık KA','Sıcaklık SÇ',
+  'Basınç Rüzgarlar KA','Basınç Rüzgarlar SÇ','Nem Yağış KA','Nem Yağış SÇ',
+  'Büyük İklim Tipleri KA','Büyük İklim Tipleri SÇ','Türkiye İklimi KA','Türkiye İklimi SÇ',
+  'Dünyanın Tektonik Oluşumu KA','Dünyanın Tektonik SÇ','İç Kuvvetler KA','İç Kuvvetler SÇ',
+  'Kayaçlar KA','Kayaçlar SÇ','Türkiye İç Kuvvetler KA','Türkiye İç Kuvvetler SÇ',
+  'Dış Kuvvetler Akarsular','Karstik Şekiller','Rüzgar Buzul','Dalga Akıntılar Kıyı','Türkiye Dış Kuvvetler',
+  'Türkiye Yer Şekilleri KA','Türkiye Yer Şekilleri SÇ','Dünya Sular','Türkiye Sular',
+  'Dünya Topraklar','Türkiye Topraklar','Dünya Bitkiler','Türkiye Bitkiler',
+  'Dünya Yerleşmeler','Türkiye Yerleşmeler','Nüfusun Önemi','Dünya Nüfus Dağılışı','Nüfus Piramitleri',
+  'Türkiye Nüfus KA','Türkiye Nüfus SÇ','Göçler KA','Göçler SÇ',
+  'Ekonomik Faaliyetler','Bölge ve Türleri','Ulaşım','Çevre ve Toplum',
+  'Afetler KA','Afetler SÇ','Dünyanın Şekli Hareketleri KA','Dünyanın Şekli Hareketleri SÇ',
+  'Coğrafi Konum KA','Coğrafi Konum SÇ','Harita Bilgisi KA','Harita Bilgisi SÇ'
+], [14,43,28,23,9, 37,22,36,35, 65,33,47,30, 52,36,42,25, 44,16,38,17, 28,16,22,16, 42,24,30,38,31, 42,19,35,43, 49,31,29,45, 34,39,37,34,30, 39,48,46,20, 28,37,43,29, 70,40,57,29, 55,34,85,35]);
+
+// Harita Bilgisi – 33 videos
+VIDEOS['har'] = generateVideos('har', [
+  'İlk Harita Dersi','Dağlık Bölgeler','Yağışlı Bölgeler','Kurak Bölgeler','Deprem Bölgeleri',
+  'Okyanus Akıntıları','Kanallar Boğazlar','Seyrek Nüfuslu Bölgeler','Yoğun Nüfuslu Bölgeler',
+  '4 Dakikada Ülkeler','YKS 2024 Taktik','Türkiye Limanları','Türkiye Platoları','Türkiye Ovaları',
+  'Türkiye Akarsular','En Uzun Akarsular','Önemli Göller','Tüm Haritalar Tek Video',
+  'Akdenizliyiz','Doğru Kaynak','Yerel Rüzgarlar','Basınç Merkezleri','Heyelan Erozyon',
+  'Harita Çalışması','Harita Dersini İzle','TYT 2024 Noktasal','TYT 2024 Haritalarla',
+  'Kanallar Boğazlar 2','Okyanus Akıntıları 2','Okyanus Akıntıları 3','Dağlık Bölgeler 1','Dağlık Bölgeler 2','Deprem Volkanizma Tsunami'
+], [19,5,3,7,5, 5,7,3,2, 4,3,1,2,3, 2,2,0.9,44, 0.9,0.2,3,3,1, 54,43,73,92, 7,4,4,2,2,2]);
+
+// AYT Matematik – 273 videos (grouped)
+VIDEOS['ayt-mat'] = generateVideos('ayt-mat', [
+  'Polinomlar 1','Polinomlar 2','Polinomlar 3','Polinomlar 4','Polinomlar Bire Bir ÖSYM','Polinomlar Beceri 1','Polinomlar Beceri 2',
+  'Polinomda Bölme 1','Polinomda Bölme 2','Polinomda Bölme 3','Polinomda Bölme 4','Polinomda Bölme Bire Bir ÖSYM','Polinomda Bölme Beceri 1','Polinomda Bölme Beceri 2',
+  '2. Derece Denklemler 1','2. Derece Denklemler 2','2. Derece Denklemler 3','2. Derece Denklemler 4','2. Derece Denklemler 5','2. Derece Denklemler 6','2. Derece Bire Bir ÖSYM','2. Derece Beceri 1','2. Derece Beceri 2','2. Derece Beceri 3',
+  'Parabol 1','Parabol 2','Parabol 3','Parabol 4','Parabol 5','Parabol 6','Parabol Bire Bir ÖSYM','Parabol Beceri 1','Parabol Beceri 2','Parabol Beceri 3','Parabol Beceri 4',
+  '2. Derece Eşitsizlikler 1','2. Derece Eşitsizlikler 2','2. Derece Eşitsizlikler 3','2. Derece Eşitsizlikler 4','2. Derece Eşitsizlikler 5','2. Derece Eşitsizlikler 6','2. Derece Eşitsizlikler Bire Bir ÖSYM','2. Derece Eşitsizlikler Beceri 1','2. Derece Eşitsizlikler Beceri 2','2. Derece Eşitsizlikler Beceri 3',
+  'Fonksiyon Uygulamaları','Fonksiyon Uygulamaları Artan Azalan','Fonksiyon Uygulamaları Öteleme','Fonksiyon Uygulamaları Simetri','Fonksiyon Uygulamaları Bire Bir ÖSYM','Fonksiyon Uygulamaları Beceri 1','Fonksiyon Uygulamaları Beceri 2',
+  'Trigonometri Yönlü Açı','Trigonometri Birim Çember','Trigonometrik Özdeşlikler','Trigonometrik Fonksiyonların İşaretleri','Trigonometri Dik Üçgende','Trigonometri Bire Bir ÖSYM','Trigonometri Beceri 1','Trigonometri Beceri 2',
+  'Trigonometri İndirgeme','Trigonometrik İfadelerde Sıralama','Trigonometri Cos Sin Teoremleri','Trigonometri Periyot Grafik','Ters Trigonometrik Fonksiyonlar','Trigonometri Bire Bir ÖSYM 2','Trigonometri Beceri 1','Trigonometri Beceri 2','Trigonometri Toplam Fark Formülleri','Trigonometri Yarım Açı Formülleri','Trigonometrik Denklemler','Trigonometri Bire Bir ÖSYM 3','Trigonometri Beceri 1 Son','Trigonometri Beceri 2 Son',
+  'Logaritma Üstel Fonksiyon 1','Logaritma Üstel Fonksiyon 2','Logaritma Fonksiyonu Özellikleri','Logaritma Özellikleri 1','Logaritma Grafikleri','Logaritma Özellikleri 2','Logaritma Özellikleri 3','Logaritmik Denklemler','Logaritmik Eşitsizlikler','Logaritma Bire Bir ÖSYM','Logaritma Beceri 1','Logaritma Berberi 2',
+  'Diziler','Diziler Dizi Özellikleri','Diziler Aritmetik Dizi','Diziler Geometrik Dizi','Diziler Bire Bir ÖSYM','Diziler Beceri 1','Diziler Beceri 2',
+  'Limit Tanımı 1','Limit Tanımı 2','Limit Özellikleri','Limit Parçalı Fonksiyonlar','Limit Mutlak Değer','Limitte Belirsizlik','Limitte Süreklilik','Limit Bire Bir ÖSYM 1','Limit Bire Bir ÖSYM 2','Limit Beceri 1','Limit Beceri 2',
+  'Türev Tanımı 1','Türev Tanımı 2','Türev Alma Kuralları 1','Türev Alma Kuralları 2','Türev Alma Kuralları 3','Türev Alma Kuralları 4','Türev Parametrik','Türev Bire Bir ÖSYM','Türev Beceri 1','Türev Beceri 2','Türevli Olma','Türev Parçalı Fonksiyonlar','Türev Ortalama Değer','Türevin Fiziksel Yorumu','Türevin Geometrik Yorumu 1','Türevin Geometrik Yorumu 2','Türevin Geometrik Yorumu 3','Türev Artan Azalanlık','Türev Bire Bir ÖSYM 1','Türev Bire Bir ÖSYM 2','Türev Beceri 1','Türev Beceri 2','Türev Beceri 3','Türev Ekstremum 1','Türev Ekstremum 2','Türev Maksimum Minimum 1','Türev Maksimum Minimum 2','Türev Polinom Grafikleri 1','Türev Polinom Grafikleri 2','Türev Bire Bir ÖSYM Son','Türev Beceri Son 1','Türev Beceri Son 2','Türev Beceri Son 3',
+  'İntegral Diferansiyel','İntegral Özellikleri','İntegral Alma','İntegral Değişken Değiştirme','İntegral Bire Bir ÖSYM','İntegral Beceri 1','İntegral Beceri 2','Belirli İntegral 1','Belirli İntegral 2','Belirli İntegral 3','Riemann Toplamı','İntegralde Alan 1','İntegralde Alan 2','İntegralde Alan 3','İntegralde Alan 4','İntegral Bire Bir ÖSYM 1','İntegral Bire Bir ÖSYM 2','İntegral Bire Bir ÖSYM 3','İntegral Beceri 1 Son','İntegral Beceri 2 Son','İntegral Beceri 3 Son','İntegral Beceri 4 Son',
+  'Koşullu Olasılık 1','Koşullu Olasılık 2','Koşullu Olasılık Bire Bir ÖSYM','Koşullu Olasılık Beceri'
+], [17,21,18,17,13,22,18, 28,25,18,15,39,22,51, 24,13,16,22,21,13,16,19,16,27, 22,23,30,20,26,41,22,25,29,33,37, 16,29,21,25,33,30,33,26,26,42, 20,20,37,25,11,39,58, 19,34,30,29,16,22,30,44, 47,14,24,33,30,16,51,29, 21,22,43,47,32,26,48, 33,18,51,42,26,49,23, 21,31,28,11,23,26,24,24,28,40,37, 27,21,24,21,20,27,12,21,35,50,19,25,21,14,16,22,28,41,24,25,31,42,41, 13,41,37,29,39,27,12,18, 18,23,18,37,14,41,35,24,30,27,27,22,32,33,31,17,19,23,24,44,23,40, 18,27,15,35]);
+
+// AYT Fizik – 177 videos
+VIDEOS['ayt-fiz'] = generateVideos('ayt-fiz', [
+  'Başlangıç','Vektörler 1','Vektörler 2','Vektörler 3','Vektörler Soru',
+  'Bağıl Hareket 1','Bağıl Hareket 2','Bağıl Hareket 3','Bağıl Hareket Soru',
+  'Newton Yasaları 1','Newton Yasaları 2','Net Kuvvet','Üst Üste Cisimler','Eğik Düzlem','Eylemsizlik Asansör',
+  'Newton SÇ 1','Newton SÇ 2','Newton SÇ 3','Newton SÇ 4',
+  'Sabit İvmeli Hareket 1','Sabit İvmeli 2','Sabit İvmeli 3','Sabit İvmeli 4','Sabit İvmeli SÇ 1','Sabit İvmeli SÇ 2',
+  'Serbest Düşme','Limit Hız','Düşey Atış Yukarıdan','Düşey Atış Aşağıdan 1','Düşey Atış Aşağıdan 2',
+  'Atış SÇ 1','Atış SÇ 2','Yatay Atış','Eğik Atış 1','Eğik Atış 2','İki Boyut SÇ 1','İki Boyut SÇ 2',
+  'İş ve Enerji','Kinetik Yerçekimi Enerji','Esneklik Potansiyel','Mekanik Enerji Korunumu 1','Mekanik Enerji Korunumu 2','Sürtünmeli Mekanik',
+  'Enerji SÇ 1','Enerji SÇ 2','İtme Momentum','Kuvvet Zaman Grafik','Momentumun Korunumu',
+  'Esnek Çarpışmalar 1D','Esnek Çarpışmalar 2D','Esnek Olmayan 1D','Esnek Olmayan 2D','Patlama Fırlatma',
+  'Momentum SÇ 1','Momentum SÇ 2','Tork 1','Tork 2','Denge 1','Denge 2','Denge 3',
+  'Tork Denge SÇ 1','Tork Denge SÇ 2','Kütle Ağırlık Merkezi 1','Kütle Ağırlık Merkezi 2','Kütle Ağırlık Merkezi 3','Kütle Ağırlık SÇ',
+  'Kaldıraçlar','Sabit Hareketli Makaralar','Palangalar','Eğik Düzlem Çıkrık','Dişli Çarklar Kasnaklar','Dönerek Ötelenen Kasnaklar','Basit Makineler SÇ',
+  'Düzgün Çembersel Hareket Temel','Merkezcil Kuvvet 1','Merkezcil Kuvvet 2','Yatay Düzlem','Düşey Düzlem','Konik Sarkaç Silindir','Yatay Eğimli Viraj','Çembersel SÇ',
+  'Dönerek Öteleme','Eylemsizlik Momenti','Dönme Kinetik Enerji','Açısal Momentum','Açısal İvme Tork','Açısal Momentumun Korunumu','Açısal Momentum SÇ',
+  'Kütle Çekim Kuvveti','Kütle Çekim Potansiyel','Kepler Kanunları','Kütle Çekim SÇ',
+  'BHH Nasıl Yapılır','BHH Düzgün Çembersel İlişki','Kuvvet Zaman Konum','İvme Hız Konum','Yay Sarkacı','Basit Sarkaç','BHH SÇ',
+  'Su Dalgalarında Kırınım','Su Dalgalarında Girişim','Çift Yarıkta Girişim','Girişim Desenine Etki','Tek Yarıkta Kırınım','Doppler Olayı','Dalga Mekaniği SÇ',
+  'Coulomb Kuvveti','Elektrik Alan 1','Elektrik Alan 2','Elektrik Alan SÇ','Elektriksel Potansiyel Enerji','Elektriksel Potansiyel','Potansiyel Fark','Potansiyel SÇ','Düzgün Elektrik Alan','Yüklü Tanecikler Hareket','Sığa Kavramı','Sığaçlar','Düzgün Alan Sığaç SÇ',
+  'Düz Telin Manyetik Alanı','Halkanın Manyetik Alanı','Bobinin Manyetik Alanı','Manyetik Alan SÇ','Tel Manyetik Kuvvet','Tel Çerçeveye Tork','Yüklü Parçacık Manyetik','Manyetik Kuvvet SÇ',
+  'İndüksiyon EMK','Manyetik Akı','Faraday Lenz','Öz İndüksiyon','Lorentz Girdap','İndüksiyon SÇ',
+  'Alternatif Akım Nasıl','AA - DA Kıyaslama','AA Devre Direnç Bobin','AA Sığaç','Empedans Rezonans','Transformatörler','AA Transformatörler SÇ',
+  'Elektromanyetik Dalgaların Oluşumu','Elektromanyetik Spektrum','Siyah Cisim Işıması','Planck Hipotezi','Siyah Cisim SÇ',
+  'Dalton Thomson','Rutherford','Bohr Modeli Yarıçap','Bohr Işıma','Bohr Uyarılma','Modern Atom','Atom Modelleri SÇ',
+  'Büyük Patlama','Temel Parçacıklar','Higgs Bozonu','Büyük Patlama SÇ',
+  'Neden Kararsız Çekirdekler','Alfa Beta Gama','Nükleer Fisyon Füzyon','Radyoaktivite SÇ',
+  'Michelson Morley','Göreli Zaman','Göreli Uzunluk Kütle','Özel Görelilik SÇ',
+  'Hertz Deneyi Foton','Fotoelektrik Denklem','Fotoelektrik Akımı','Kesme Gerilimi','Fotoelektrik SÇ',
+  'Compton Saçılması','De Broglie','Compton De Broglie SÇ',
+  'Görüntüleme Teknolojileri','Yarı İletken','Süper İletkenler','Nanoteknoloji Laser'
+], [3,13,27,20,23, 27,22,27,29, 26,35,28,40,25,34, 28,27,34,31, 37,27,25,41,20,24, 35,28,16,24,20, 29,26,30,28,31,31,26, 27,37,32,27,27,23, 23,26,23,23,22, 30,19,33,23,37, 30,26,25,24,25,37,39, 27,21,27,31,38,19, 12,32,28,29,29,34,16, 33,21,23,29,31,29,31,31, 24,19,28,17,24,39,19, 29,25,19,20, 21,26,28,31,25,27,28, 19,40,25,17,22,21,31, 37,19,19,20,27,26,28,23, 31,20,34,17,20,36, 21,26,22,28,20,29,14, 26,30,24,14,11, 18,12,26,28,30,26,17, 21,23,32,16, 15,22,19,15, 11,25,16,8, 20,25,27,20,12, 23,19,10, 33,26,13,24]);
+
+// AYT Kimya – 71 videos
+VIDEOS['ayt-kim'] = generateVideos('ayt-kim', [
+  'Fulleme Rehberi','Atomun Kuantum Modeli 1','Atomun Kuantum Modeli 2','Periyodik Sistem Orbital','İyonların Elektron Dağılımı','Periyodik Sistemde Yer','Periyodik Özellikler 1','Periyodik Özellikler 2',
+  'Elementleri Tanıyalım','Modern Atom Test','Kuantum ÖSYM Soruları',
+  'Gazların Özellikleri','Gaz Yasaları','İdeal Gaz Yasası','Gazlarda Kinetik Teori','Gaz Karışımları 1','Gaz Karışımları 2','Gazların Su Üstünde Toplanması','Gazlar Test','Gazlar ÖSYM',
+  'Çözücü Çözünen Etkileşimleri','Derişim Birimleri','Molar Derişim','Çözeltinin Karıştırılması','Tepkime Çözeltiler','Koligatif Özellikler','Çözeltilerin Sınıflandırılması','Çözünürlük','Çözünürlüğe Etki Eden','Sıvı Çözeltiler Test 1','Sıvı Çözeltiler Test 2','Sıvı Çözeltiler ÖSYM',
+  'Tepkimelerde Enerji','Standart Oluşum Entalpisi','Bağ Enerjileri Hess','Tepkimelerde Enerji Test','Enerji ÖSYM',
+  'Tepkime Hızları','Hızı Etkileyen Faktörler 1','Hızı Etkileyen Faktörler 2','Tepkimede Hız',
+  'Kimyasal Denge','Denge Sabitleri','Dengeye Etki Eden Faktörler','Denge Test','Denge ÖSYM',
+  'Sulu Çözeltiler Asit Baz','Asit Baz Tanımları','Zayıf Asit Baz pH','Nötralleşme','Asit Baz Titrasyonu','Sulu Çözeltiler Test',
+  'Çözünürlük Dengesi','Çözünürlük Dengesi Test','Aktiflik Redoks','Redoks Denkleştirme','Aktiflik','Elektrotlar 1','Elektrotlar 2','Derişim Pilleri','Elektroliz','Kimya Elektrik ÖSYM',
+  'Karbon Kimyasına Giriş','Organik Bileşikler Alkanlar','Alkenler','Alkinler','Alkoller Eterler','Aldehit Ketonlar','Karboksilik Asitler','Organik Kimya Test','Organik ÖSYM'
+], [11,45,19,36,31,29,49,33, 35,28,15, 50,49,42,32,36,39,52,46,18, 44,44,37,43,30,50,32,41,35,31,22,20, 53,36,48,39,21, 49,34,38,37, 35,58,28,40,17, 30,49,38,34,30,50, 47,24,20,33,23,32,36,39,55,43, 101,87,55,43,59,25,40,20,32]);
+
+// AYT Biyoloji – 101 videos
+VIDEOS['ayt-bio'] = generateVideos('ayt-bio', [
+  'Kamp Tanıtımı 1','Kamp Takvimi','Nöron Yapısı KA','Nöron SÇ','Beyin KA','Beyin SÇ',
+  'Omurilik ÇSS KA','Omurilik ÇSS SÇ','Endokrin Sistem KA','Hipofiz Bezi','Hipofiz SÇ',
+  'Tiroit Paratiroit KA','Tiroit SÇ','Böbrek Üstü Pankreas KA','Böbrek Pankreas SÇ','Eşeysel Bezler','Eşeysel SÇ','Endokrin Genel Tekrar',
+  'Göz KA','Göz SÇ','Kulak KA','Kulak SÇ','Burun Dil Deri KA','Burun Dil Deri SÇ',
+  'Kemik Doku KA','Kemik SÇ','Kıkırdak Kas Doku KA','Kas Doku Eklemler SÇ',
+  'Kas Kasılma KA','Kas Genel Tekrar SÇ','Sindirim Organları KA','Sindirim Organları SÇ',
+  'Karaciğer Pankreas Safra','Sindirime Yardımcı SÇ','Kimyasal Sindirim','Emilim Hastalıkları','Sindirim Emilim SÇ',
+  'Kalp KA','Kalp SÇ','Atar Toplar Kılcal Kan Dolaşımı','Kan Damarları SÇ','Kan Yapısı Lenf','Kan Yapısı Lenf SÇ',
+  'Bağışıklık Sistemi KA','Bağışıklık SÇ','Dolaşım Bağışıklık SÇ',
+  'Solunum Organları KA','Solunum SÇ','Solunum Gazları KA','Solunum Gazları SÇ',
+  'Böbrek Yapısı KA','Böbrek SÇ','İdrar Oluşumu KA','İdrar SÇ','Üriner Genel Tekrar',
+  'Erkek Dişi Üreme','Üreme SÇ','Embriyonik Gelişim KA','Embriyonik SÇ',
+  'Komünite Ekolojisi 1 KA','Komünite 1 SÇ','Komünite 2 KA','Komünite 2 SÇ 1','Komünite 2 SÇ 2',
+  'Popülasyon Ekolojisi KA','Popülasyon SÇ','Popülasyon Genel Tekrar',
+  'Nükleik Asitler Replikasyon KA','Nükleik SÇ','Protein Sentezi KA','Protein SÇ',
+  'Biyoteknoloji Gen Mühendisliği KA','Biyoteknoloji SÇ',
+  'Hücresel Solunum Özet','Glikoliz Son Ürün','Glikoliz SÇ','Krebs Döngüsü','ETS Anaerobik','Hücresel Solunum Fermantasyon SÇ',
+  'Fotosentez Özet','Fotosentez Evreleri','Fotosentez SÇ','Fotosentez Kemosentez','Kemosentez SÇ','Solunum Fotosentez SÇ',
+  'Bitkisel Dokular KA','Bitkisel Dokular SÇ','Bitki Organları KA','Bitki Organları SÇ',
+  'Bitkide Taşıma KA','Bitkide Taşıma SÇ','Bitkisel Hormonlar KA','Bitkisel Hormonlar SÇ',
+  'Bitkide Hareket KA','Bitkide Hareket SÇ','Bitkide Üreme KA','Bitkide Üreme SÇ',
+  'Canlılar ve Çevre','Deneme SÇ 1','Deneme SÇ 2','Full Tekrar'
+], [11,11,51,13,38,22, 33,24,19,31,13, 21,11,24,15,19,10,13, 43,10,25,9,37,24, 24,14,27,12, 35,34,42,22, 29,12,23,35,31, 38,21,46,31,31, 9,24,11,28, 36,22,39,24, 30,22,20,9,26, 70,24,42,19, 29,21,20,18,20, 19,28,19, 43,43,61,33, 32,25, 49,22,16,17,27,35, 35,27,23,32,18,15, 75,10,31,8, 32,24,32,9, 25,9,46,27, 23,66,61,195]);
+
+// Organik Kimya – 27 videos
+VIDEOS['org-kim'] = generateVideos('org-kim', [
+  'Tanıtım','Karbon Kimyasına Giriş','Karbon Elementinin Özellikleri','Lewis Formülleri','Hibritleşme Molekül Geometrisi','Sigma Pi VSEPR','Hibritleşme Test',
+  'Organik Bileşikler','Hidrokarbonlar Alkanlar','IUPAC Sistematik Adlandırma','Alkan Alkil Özel Adlandırma','Alkanlar Alıştırma','Alkanlar Test',
+  'Sikloalkanlar','Alkanların Fiziksel Kimyasal','Alkenler','Alkenlerin Özellikleri','Alkenlerde İzomeri','Alkinler','Alkinlerin Özellikleri',
+  'Aromatik Bileşikler','Fonksiyonel Gruplar Alkoller','Alkollerin Fiziksel','Eterler','Aldehit ve Ketonlar','Aldehit Ketonların Fiziksel','Karboksilik Asit Esterler'
+], [5,30,35,51,46,58,50, 27,31,41,45,49,39, 39,44,68,38,44,43,29, 32,56,38,41,78,53,73]);
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+
+function generateVideos(courseId, names, durations) {
+  return names.map((name, i) => ({
+    id: courseId + '_' + i,
+    courseId,
+    title: name,
+    duration: durations[i] || 20,
+  }));
+}
+
+// ══════════════════════════════════════════════════════════
+// WEEKLY SCHEDULE GENERATOR
+// ══════════════════════════════════════════════════════════
+
+// Schedule: 6 days/week (Mon-Sat), Sunday rest
+// Each day: Geometri (40-50 min) + TYT Mat (60-80 min) + TYT Türkçe (40 min) + TYT Fen (40 min) + Sosyal rotasyonu (40 min)
+// Sosyal rotation: Tarih, Felsefe, Din Kültürü, Coğrafya, Harita (1 per day, cycle)
+
+const SOCIAL_ROTATION = ['tar', 'cog', 'fel', 'har', 'din'];
+
+function buildSchedule() {
+  // Ordered video queues per course
+  const queues = {};
+  for (const cId in VIDEOS) {
+    queues[cId] = [...VIDEOS[cId]];
+  }
+
+  const days = [];
+  let dayCount = 0;
+  let socialIdx = 0;
+  const MAX_WEEKS = 40;
+
+  const phase1Courses = ['tyt-mat', 'geo', 'tyt-tur', 'tyt-fiz', 'tyt-kim', 'tyt-bio'];
+  const phase2Courses = ['ayt-mat', 'ayt-fiz', 'ayt-kim', 'ayt-bio', 'org-kim'];
+
+  // We build enough weeks
+  for (let week = 0; week < MAX_WEEKS; week++) {
+    for (let d = 0; d < 6; d++) { // Mon-Sat
+      dayCount++;
+      const lessons = [];
+      let timeLeft = 185; // ~3 hours in minutes
+
+      // Determine if we're in phase 1 or 2
+      const phase1Done = phase1Courses.every(c => queues[c].length === 0);
+
+      if (!phase1Done) {
+        // PHASE 1
+        // 1. Geometri block (~45 min)
+        addVideosBlock(lessons, queues, 'geo', 45, timeLeft);
+        timeLeft -= lessonsTime(lessons, 'geo', lessons.length);
+
+        // 2. TYT Mat (~70 min)
+        let before = lessons.length;
+        addVideosBlock(lessons, queues, 'tyt-mat', 70, timeLeft);
+
+        // 3. TYT Türkçe (~35 min) – only if time
+        addVideosBlock(lessons, queues, 'tyt-tur', 35, 180);
+
+        // 4. TYT Fizik (~25 min)
+        addVideosBlock(lessons, queues, 'tyt-fiz', 25, 180);
+
+        // 5. TYT Kim or Bio alternating (~20 min)
+        const scienceCourse = dayCount % 2 === 0 ? 'tyt-kim' : 'tyt-bio';
+        addVideosBlock(lessons, queues, scienceCourse, 20, 180);
+
+        // 6. Social rotation (~30 min)
+        const soc = SOCIAL_ROTATION[socialIdx % SOCIAL_ROTATION.length];
+        addVideosBlock(lessons, queues, soc, 30, 180);
+        if (queues[SOCIAL_ROTATION[socialIdx % SOCIAL_ROTATION.length]].length === 0) socialIdx++;
+        else if (d === 5) socialIdx++; // advance on weekends
+
+      } else {
+        // PHASE 2 – AYT
+        addVideosBlock(lessons, queues, 'geo', 30, 180); // finish geo leftovers
+        addVideosBlock(lessons, queues, 'ayt-mat', 70, 180);
+        addVideosBlock(lessons, queues, 'ayt-fiz', 40, 180);
+        const aytSci = dayCount % 2 === 0 ? 'ayt-kim' : 'ayt-bio';
+        addVideosBlock(lessons, queues, aytSci, 30, 180);
+        addVideosBlock(lessons, queues, 'org-kim', 20, 180);
+      }
+
+      if (lessons.length === 0 && phase1Done && phase2Courses.every(c => queues[c].length === 0)) {
+        break;
+      }
+
+      if (lessons.length > 0) {
+        days.push({ week: week + 1, dayOfWeek: d, dayCount, lessons });
+      }
+    }
+  }
+
+  return days;
+}
+
+function addVideosBlock(lessons, queues, courseId, targetMin, _timeLeft) {
+  if (!queues[courseId] || queues[courseId].length === 0) return;
+  let added = 0;
+  while (queues[courseId].length > 0 && added < targetMin) {
+    const v = queues[courseId].shift();
+    lessons.push(v);
+    added += v.duration;
+    if (added >= targetMin) break;
+  }
+}
+
+function lessonsTime(lessons, courseId, count) {
+  return lessons.filter(l => l.courseId === courseId).reduce((a, l) => a + l.duration, 0);
+}
+
+const SCHEDULE = buildSchedule();
+const TOTAL_VIDEOS = Object.values(VIDEOS).reduce((a, arr) => a + arr.length, 0);
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+
+let progress = {};
+let currentWeek = 1;
+let activeVideoFilter = 'all';
+let videoSearch = '';
+
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('yks_progress_v2');
+    if (saved) progress = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveProgress() {
+  localStorage.setItem('yks_progress_v2', JSON.stringify(progress));
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function toggleVideo(videoId) {
+  progress[videoId] = !progress[videoId];
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════
+
+const DAY_NAMES = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const DOT_COLORS = {
+  'tyt-mat': '#5b6ef8','geo': '#06b6d4','tyt-tur': '#f59e0b','tyt-fiz': '#10b981',
+  'tyt-kim': '#ec4899','tyt-bio': '#84cc16','tar': '#fbbf24','fel': '#a78bfa',
+  'din': '#22c55e','cog': '#fb923c','har': '#6366f1','ayt-mat': '#8b5cf6',
+  'ayt-fiz': '#22d3ee','ayt-kim': '#f43f5e','ayt-bio': '#a3e635','org-kim': '#fb7185'
+};
+
+function renderAll() {
+  renderHeader();
+  renderSchedule();
+  renderOverview();
+  renderVideos();
+}
+
+function renderHeader() {
+  const done = Object.values(progress).filter(Boolean).length;
+  document.getElementById('h-total').textContent = TOTAL_VIDEOS;
+  document.getElementById('h-done').textContent = done;
+  document.getElementById('h-pct').textContent = Math.round(done / TOTAL_VIDEOS * 100);
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-left').textContent = TOTAL_VIDEOS - done;
+  document.getElementById('s-pct').textContent = '%' + Math.round(done / TOTAL_VIDEOS * 100);
+}
+
+function renderSchedule() {
+  document.getElementById('week-label').textContent = 'Hafta ' + currentWeek;
+  const weekDays = SCHEDULE.filter(d => d.week === currentWeek);
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = '';
+
+  if (weekDays.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="e-icon">🎉</div>Bu hafta için ders yok!</div>';
+    return;
+  }
+
+  for (const day of weekDays) {
+    const card = document.createElement('div');
+    card.className = 'day-card';
+
+    const doneDayCount = day.lessons.filter(l => progress[l.id]).length;
+    const totalMin = Math.round(day.lessons.reduce((a, l) => a + l.duration, 0));
+
+    card.innerHTML = `
+      <div class="day-header">
+        <div class="day-name">${DAY_NAMES[day.dayOfWeek]}</div>
+        <div class="day-rest">${totalMin} dk</div>
+      </div>
+    `;
+
+    for (const lesson of day.lessons) {
+      const isDone = !!progress[lesson.id];
+      const item = document.createElement('div');
+      item.className = 'lesson-item' + (isDone ? ' done' : '');
+      item.onclick = () => toggleVideo(lesson.id);
+      const color = DOT_COLORS[lesson.courseId] || '#888';
+      item.innerHTML = `
+        <div class="lesson-check"></div>
+        <div class="lesson-info">
+          <div class="lesson-name" title="${lesson.title}">${lesson.title}</div>
+          <div class="lesson-duration">
+            <div class="dot" style="background:${color}"></div>
+            ${COURSES[lesson.courseId]?.name || lesson.courseId} · ${lesson.duration} dk
+          </div>
+        </div>
+      `;
+      card.appendChild(item);
+    }
+
+    grid.appendChild(card);
+  }
+
+  // Sunday rest card
+  const restCard = document.createElement('div');
+  restCard.className = 'day-card';
+  restCard.innerHTML = `
+    <div class="day-header"><div class="day-name">Pazar</div><div class="day-rest">Dinlenme</div></div>
+    <div style="text-align:center;padding:30px 0;color:var(--muted);font-size:22px">😴<br><span style="font-size:12px;display:block;margin-top:8px">Dinlenme Günü</span></div>
+  `;
+  grid.appendChild(restCard);
+}
+
+function renderOverview() {
+  const grid = document.getElementById('overview-grid');
+  grid.innerHTML = '';
+  for (const [cId, cInfo] of Object.entries(COURSES)) {
+    const vids = VIDEOS[cId] || [];
+    if (vids.length === 0) continue;
+    const done = vids.filter(v => progress[v.id]).length;
+    const pct = Math.round(done / vids.length * 100);
+
+    const card = document.createElement('div');
+    card.className = `ov-card ${cInfo.cls}`;
+    card.onclick = () => { showTab('videolar'); setVideoFilter(cId); };
+    card.innerHTML = `
+      <div class="ov-icon">${cInfo.icon}</div>
+      <div class="ov-name">${cInfo.name}</div>
+      <div class="ov-sub">${vids.length} video · Faz ${cInfo.phase}</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="ov-pct">${done}/${vids.length} · %${pct}</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderVideos() {
+  // Filter buttons
+  const cf = document.getElementById('course-filter');
+  cf.innerHTML = `<div class="cf-btn ${activeVideoFilter === 'all' ? 'active' : ''}" onclick="setVideoFilter('all')">Tümü</div>`;
+  for (const [cId, cInfo] of Object.entries(COURSES)) {
+    if (!VIDEOS[cId] || VIDEOS[cId].length === 0) continue;
+    cf.innerHTML += `<div class="cf-btn ${activeVideoFilter === cId ? 'active' : ''}" onclick="setVideoFilter('${cId}')">${cInfo.icon} ${cInfo.name}</div>`;
+  }
+
+  // Video list
+  const list = document.getElementById('video-list');
+  list.innerHTML = '';
+
+  const allVids = Object.values(VIDEOS).flat();
+  let filtered = activeVideoFilter === 'all' ? allVids : (VIDEOS[activeVideoFilter] || []);
+  if (videoSearch.trim()) {
+    const q = videoSearch.toLowerCase();
+    filtered = filtered.filter(v => v.title.toLowerCase().includes(q) || (COURSES[v.courseId]?.name || '').toLowerCase().includes(q));
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="e-icon">🔍</div>Sonuç bulunamadı</div>';
+    return;
+  }
+
+  filtered.slice(0, 200).forEach((v, idx) => {
+    const isDone = !!progress[v.id];
+    const row = document.createElement('div');
+    row.className = 'video-row' + (isDone ? ' v-done' : '');
+    row.onclick = () => toggleVideo(v.id);
+    const bc = COURSES[v.courseId]?.badgeCls || '';
+    row.innerHTML = `
+      <div class="v-num">${idx + 1}</div>
+      <div class="v-check"></div>
+      <div class="v-title">${v.title}</div>
+      <div class="v-badge ${bc}">${COURSES[v.courseId]?.name || v.courseId}</div>
+      <div class="v-dur">${v.duration} dk</div>
+    `;
+    list.appendChild(row);
+  });
+
+  if (filtered.length > 200) {
+    list.innerHTML += `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Arama yaparak filtrele · ${filtered.length - 200} video daha var</div>`;
+  }
+}
+
+function setVideoFilter(cId) {
+  activeVideoFilter = cId;
+  renderVideos();
+}
+
+function filterVideos() {
+  videoSearch = document.getElementById('v-search').value;
+  renderVideos();
+}
+
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function changeWeek(dir) {
+  const maxWeek = Math.max(...SCHEDULE.map(d => d.week));
+  currentWeek = Math.max(1, Math.min(maxWeek, currentWeek + dir));
+  renderSchedule();
+}
+
+// Init
+loadProgress();
+renderAll();
+</script>
+</body>
+</html>
